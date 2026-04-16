@@ -1,0 +1,299 @@
+//Shift cipher
+
+def caesar_cipher(text, shift, mode='encrypt'):
+    result = ""
+
+    if mode == 'decrypt':
+        shift = -shift
+
+    for char in text:
+        if char.isalpha():
+
+            base = ord('A') if char.isupper() else ord('a')
+
+            shifted = (ord(char) - base + shift) % 26 + base
+            result += chr(shifted)
+        else:
+
+            result += char
+    return result
+
+message = input("enter the message :")
+key = int(input("enter the key :"))
+
+
+encrypted_message = caesar_cipher(message, key, mode='encrypt')
+print(f"Original message:  {message}")
+print(f"Shift key:         {key}")
+print(f"Encrypted message: {encrypted_message}")
+
+print("-" * 20)
+
+decrypted_message = caesar_cipher(encrypted_message, key, mode='decrypt')
+print(f"Encrypted message: {encrypted_message}")
+print(f"Decrypted message: {decrypted_message}")
+
+//Hill cipher
+
+keyMatrix = [[0] * 3 for i in range(3)]
+
+
+messageVector = [[0] for i in range(3)]
+
+
+cipherMatrix = [[0] for i in range(3)]
+
+def getKeyMatrix(key):
+    k = 0
+    for i in range(3):
+        for j in range(3):
+            keyMatrix[i][j] = ord(key[k]) % 65
+            k += 1
+
+
+def encrypt(messageVector):
+    for i in range(3):
+        for j in range(1):
+            cipherMatrix[i][j] = 0
+            for x in range(3):
+                cipherMatrix[i][j] += (keyMatrix[i][x] *
+                                       messageVector[x][j])
+            cipherMatrix[i][j] = cipherMatrix[i][j] % 26
+
+def HillCipher(message, key):
+
+
+    getKeyMatrix(key)
+
+    # Generate vector for the message
+    for i in range(3):
+        messageVector[i][0] = ord(message[i]) % 65
+
+    # Following function generates
+    # the encrypted vector
+    encrypt(messageVector)
+
+    # Generate the encrypted text
+    # from the encrypted vector
+    CipherText = []
+    for i in range(3):
+        CipherText.append(chr(cipherMatrix[i][0] + 65))
+
+    # Finally print the ciphertext
+    print("Ciphertext: ", "".join(CipherText))
+
+
+def main():
+
+
+    message = input("enter the message :")
+
+
+    key = "GYBNQKURP"
+
+    HillCipher(message, key)
+
+if __name__ == "__main__":
+    main()
+
+//Playfair cipher
+
+def generate_matrix(key):
+    key = key.upper().replace("J", "I")
+    matrix = []
+    used = set()
+
+    for ch in key:
+        if ch.isalpha() and ch not in used:
+            matrix.append(ch)
+            used.add(ch)
+
+    for ch in "ABCDEFGHIKLMNOPQRSTUVWXYZ":
+        if ch not in used:
+            matrix.append(ch)
+            used.add(ch)
+
+    return [matrix[i:i+5] for i in range(0, 25, 5)]
+
+
+def find_position(matrix, ch):
+    for i in range(5):
+        for j in range(5):
+            if matrix[i][j] == ch:
+                return i, j
+
+
+def prepare_text(text):
+    text = text.upper().replace("J", "I")
+    prepared = ""
+    i = 0
+
+    while i < len(text):
+        if text[i].isalpha():
+            a = text[i]
+            if i + 1 < len(text) and text[i + 1].isalpha():
+                b = text[i + 1]
+                if a == b:
+                    prepared += a + "X"
+                    i += 1
+                else:
+                    prepared += a + b
+                    i += 2
+            else:
+                prepared += a + "X"
+                i += 1
+        else:
+            i += 1
+
+    if len(prepared) % 2 != 0:
+        prepared += "X"
+
+    return prepared
+
+
+def playfair_encrypt(plaintext, matrix):
+    plaintext = prepare_text(plaintext)
+    cipher = ""
+
+    for i in range(0, len(plaintext), 2):
+        a, b = plaintext[i], plaintext[i+1]
+        r1, c1 = find_position(matrix, a)
+        r2, c2 = find_position(matrix, b)
+
+        if r1 == r2: # same row
+            cipher += matrix[r1][(c1 + 1) % 5]
+            cipher += matrix[r2][(c2 + 1) % 5]
+
+        elif c1 == c2: # same column
+            cipher += matrix[(r1 + 1) % 5][c1]
+            cipher += matrix[(r2 + 1) % 5][c2]
+
+        else: # rectangle
+            cipher += matrix[r1][c2]
+            cipher += matrix[r2][c1]
+
+    return cipher
+
+
+def playfair_decrypt(ciphertext, matrix):
+    plain = ""
+
+    for i in range(0, len(ciphertext), 2):
+        a, b = ciphertext[i], ciphertext[i+1]
+        r1, c1 = find_position(matrix, a)
+        r2, c2 = find_position(matrix, b)
+
+        if r1 == r2: # same row
+            plain += matrix[r1][(c1 - 1) % 5]
+            plain += matrix[r2][(c2 - 1) % 5]
+
+        elif c1 == c2: # same column
+            plain += matrix[(r1 - 1) % 5][c1]
+            plain += matrix[(r2 - 1) % 5][c2]
+
+        else: # rectangle
+            plain += matrix[r1][c2]
+            plain += matrix[r2][c1]
+
+    return plain
+
+
+# ---------- Main ----------
+key = input("Enter key: ")
+message = input("Enter message: ")
+
+matrix = generate_matrix(key)
+
+print("\nPlayfair Matrix:")
+for row in matrix:
+    print(row)
+
+encrypted = playfair_encrypt(message, matrix)
+decrypted = playfair_decrypt(encrypted, matrix)
+
+print("\nEncrypted Text:", encrypted)
+print("Decrypted Text:", decrypted)
+
+//Fermat theorem
+
+import random
+
+def fer(n, k):
+    if n == 1 or n == 4:
+        return False
+    elif n == 2 or n == 3:
+        return True
+    else:
+        for i in range(k):
+            a = random.randint(2, n - 2)
+            if pow(a, n - 1, n) != 1:
+                return False
+    return True
+
+# --- Menu Driven Interface ---
+while True:
+    print("\n--- Fermat Primality Test ---")
+    print("1. Check Prime")
+    print("2. Exit")
+    choice = input("Select an option: ")
+
+    if choice == '1':
+        try:
+            num = int(input("Enter number to test (n): "))
+            iterations = int(input("Enter number of iterations (k): "))
+
+            if fer(num, iterations):
+                print(f"Result: {num} is likely Prime")
+            else:
+                print(f"Result: {num} is Composite")
+        except ValueError:
+            print("Please enter valid integers.")
+    elif choice == '2':
+        print("Exiting...")
+        break
+    else:
+        print("Invalid choice, try again.")
+
+//Miller Robin
+
+number = int(input("Enter a no: "))
+
+def prime(number):
+    if number <= 2 or number % 2 == 0:
+        print("Composite")
+        return
+
+    # STEP 1: n-1 = 2^k * m
+    n = number - 1
+    i = 1
+
+    while True:
+        n2 = pow(2, i)
+        m = n / n2
+        if not m.is_integer():
+            k = i - 1
+            m = int(n / pow(2, k))
+            break
+        i += 1
+
+    # STEP 2: choose base a = 2
+    a = 2
+    b = pow(a, m, number)
+
+    if b == 1 or b == number - 1:
+        print("Probably Prime")
+        return
+
+    # STEP 3: square b
+    for _ in range(k - 1):
+        b = (b * b) % number
+        if b == number - 1:
+            print("Probably Prime")
+            return
+        if b == 1:
+            print("Composite")
+            return
+
+    print("Composite")
+
+prime(number)
